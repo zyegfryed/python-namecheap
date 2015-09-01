@@ -24,8 +24,9 @@
 ##############################################################################
 
 import os
-
 from setuptools import setup, find_packages
+
+import namecheap
 
 
 def read(fname):
@@ -33,7 +34,7 @@ def read(fname):
 
 setup(
     name='namecheap',
-    version='0.1.0',
+    version=namecheap.__version__,
     url='http://www.github.com/mvillalba/python-namecheap/',
     license='MIT',
     description='Python wrapper for Namecheap\'s API.',
@@ -51,6 +52,7 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Internet",
         ],
-    packages=find_packages('src'),
-    package_dir={'': 'src'},
+    packages=find_packages(),
+    include_package_data=True,
+    zip_safe=False
 )
