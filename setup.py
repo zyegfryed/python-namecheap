@@ -33,7 +33,7 @@ def read(fname):
 
 setup(
     name='namecheap',
-    version='develop',
+    version='0.1.0',
     url='http://www.github.com/mvillalba/python-namecheap/',
     license='MIT',
     description='Python wrapper for Namecheap\'s API.',
@@ -41,7 +41,7 @@ setup(
     author_email='martin@martinvillalba.com',
     long_description=read('README.md'),
     classifiers=[
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
@@ -53,5 +53,4 @@ setup(
         ],
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    install_requires=['distribute'],
 )
