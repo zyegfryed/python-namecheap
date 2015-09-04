@@ -23,6 +23,7 @@
 
 import datetime
 from decimal import Decimal
+from collections import namedtuple
 
 from namecheap.exceptions import *
 
@@ -111,8 +112,8 @@ class NCAPI(object):
     def _bool(self, value):
         return True if value == 'true' else False
 
-    def _call(self, command, args={}):
-        doc = self.client._call('namecheap.{0}'.format(command), args)
+    def _call(self, command, args={}, method='get'):
+        doc = self.client._call('namecheap.{0}'.format(command), args, method)
 
         if doc['Errors']:
             system = doc['Errors']['Number'][0:2]
@@ -306,9 +307,20 @@ class NCDomain(NCAPI):
 
         return ret
 
+Host = namedtuple('Host', ['id','name', 'record_type', 'address', 'mx_pref', 'ttl'])
+
 class NCDomainDNS(NCAPI):
     def set_default(self, sld, tld):
-        pass
+        doc = self._call('domains.dns.setDefault', {'SLD': sld, 'TLD': tld})
+
+        result = doc['CommandResponse'] \
+            .findall(self.client._name('DomainDNSSetDefaultResult'))
+
+        domain = "%s.%s" % (sld, tld)
+        assert result.attrib['Domain'] == domain, \
+               'Got an unexpected domain name.'
+
+        return self._bool(result.attrib['Updated'])
 
     def set_custom(self, sld, tld, servers):
         pass
@@ -317,11 +329,51 @@ class NCDomainDNS(NCAPI):
         pass
 
     def get_hosts(self, sld, tld):
-        pass
+        doc = self._call('domains.dns.getHosts', {'SLD': sld, 'TLD': tld})
 
-    def set_hosts(self, sld, tld, hostnames, record_types, addresses,
-                  mxprefs=None, email_type=None, ttl=None):
-        pass
+        result = doc['CommandResponse'] \
+            .findall(self.client._name('DomainDNSGetHostsResult'))[0]
+
+        domain = "%s.%s" % (sld, tld)
+        assert result.attrib['Domain'] == domain, \
+               'Got an unexpected domain name.'
+
+        ret = dict()
+        hosts = result.findall(self.client._name('host'))
+        for host in hosts:
+            ret[host.attrib['Name']] = Host(
+                int(host.attrib['HostId']),
+                host.attrib['Name'],
+                host.attrib['Type'],
+                host.attrib['Address'],
+                host.attrib['MXPref'],
+                host.attrib['TTL'],
+            )
+
+        return ret
+
+    def set_hosts(self, sld, tld, hosts, email_type=None):
+        args = {'SLD': sld, 'TLD': tld}
+        for n, host in enumerate(hosts):
+            args['HostName%d' % n] = host.name
+            args['RecordType%d' % n] = host.record_type
+            args['Address%d' % n] = host.address
+            if host.mxpref:
+                args['MXPref%d' % n] = host.mx_pref
+            args['TTL%d' % n] = host.ttl
+        if email_type:
+            args['EmailType'] = email_type
+
+        doc = self._call('domains.dns.setHosts', args, method='post')
+
+        result = doc['CommandResponse'] \
+            .findall(self.client._name('DomainDNSSetHostsResult'))[0]
+
+        domain = "%s.%s" % (sld, tld)
+        assert result.attrib['Domain'] == domain, \
+               'Got an unexpected domain name.'
+
+        return self._bool(result.attrib['IsSuccess'])
 
     def get_email_forwarding(self, domain):
         pass

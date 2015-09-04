@@ -21,9 +21,10 @@
 # THE SOFTWARE.
 #
 
-import urllib2
 from decimal import Decimal
 from xml.etree import ElementTree
+
+import requests
 
 from namecheap.api import NCDomain, NCDomainDNS, NCDomainNS, NCDomainTransfer
 from namecheap.api import NCSSL, NCUser, NCUserAddress
@@ -49,25 +50,6 @@ class NCClient(object):
         self.ssl = NCSSL(self)
         self.user = NCUser(self)
         self.address = NCUserAddress(self)
-
-    def _make_url(self, command, args):
-        flat_args = ""
-
-        for k, v in args.items():
-            flat_args += "&{0}={1}".format(k, v)
-
-        url = "{0}?ApiUser={1}&ApiKey={2}&UserName={3}&ClientIP={4}" \
-              "&Command={5}{6}".format(
-                  self.environment,
-                  self.apiuser,
-                  self.apikey,
-                  self.username,
-                  self.client_ip,
-                  command,
-                  flat_args,
-              )
-
-        return url
 
     def _name(self, tag):
         return '{' + NC_NAMESPACE + '}' + tag
@@ -124,10 +106,16 @@ class NCClient(object):
 
         return doc
 
-    def _call(self, command, args={}):
-        url = self._make_url(command, args)
-        response = urllib2.urlopen(url)
-        doc = self._process_response(response.read())
+    def _call(self, command, args={}, method='get'):
+        response = requests.request(method, self.environment,
+                params={
+                    'ApiUser': self.apiuser,
+                    'ApiKey': self.apikey,
+                    'UserName': self.username,
+                    'ClientIP': self.client_ip,
+                    'Command': command,
+                }, data=args)
+        doc = self._process_response(response.text)
 
         return doc
 
