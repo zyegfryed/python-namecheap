@@ -346,8 +346,8 @@ class NCDomainDNS(NCAPI):
                 host.attrib['Name'],
                 host.attrib['Type'],
                 host.attrib['Address'],
-                host.attrib['MXPref'],
-                host.attrib['TTL'],
+                int(host.attrib['MXPref']),
+                int(host.attrib['TTL']),
             )
 
         return ret
