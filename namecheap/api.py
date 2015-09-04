@@ -358,7 +358,7 @@ class NCDomainDNS(NCAPI):
             args['HostName%d' % n] = host.name
             args['RecordType%d' % n] = host.record_type
             args['Address%d' % n] = host.address
-            if host.mxpref:
+            if host.mx_pref:
                 args['MXPref%d' % n] = host.mx_pref
             args['TTL%d' % n] = host.ttl
         if email_type:
